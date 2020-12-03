@@ -3,6 +3,9 @@ const inquirer = require('inquirer');
 const mysql = require('mysql');
 const Department = require(__dirname + '/classes/Department.js');
 const Role = require(__dirname + '/classes/Role.js');
+const Employee = require(__dirname + '/classes/Employee.js');
+
+// const viewFunctions = require(__dirname + '/crud-functions/read-functions/view.js');
 
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -38,6 +41,9 @@ function init() {
                 break;
             case 'Add Role':
                 addRole();
+                break;
+            case 'Add Employee':
+                addEmployee();
                 break;
             case 'View Departments':
                 viewDepartments();
@@ -153,6 +159,110 @@ function getDepartmentsAsync() {
 
 // Add Employees
 
+// First get an array of objects that includes:
+// role titles and ids
+// employee lastnames and ids
+
+function addEmployee() {
+    const rolesData = [];
+    const rolesNames = [];
+
+    const employeesData = [];
+    const employeesNames = ['No Manager'];
+
+    getRolesAsync()
+    .then(data => {
+        for (let i = 0; i < data.length; i++) {
+            rolesData.push(data[i]);
+            rolesNames.push(data[i].role)
+        }
+
+        getEmployeesAsync()
+        .then(data => {
+            for (let i = 0; i < data.length; i++) {
+                employeesData.push(data[i]);
+                employeesNames.push(data[i].last_name)
+            }
+        }).catch(err => {
+            console.log(err);
+        })
+    }).catch(err => {
+        console.log(err);
+    });
+
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'firstName',
+            message: `What is the employee's first name?`,
+        },
+        {
+            type: 'input',
+            name: 'lastName',
+            message: `What is the employee's last name?`
+        },
+        {
+            type: 'list',
+            name: 'role',
+            message: `What is the employee's role?`,
+            choices: rolesNames
+        },
+        {
+            type: 'list',
+            name: 'manager',
+            message: `Who is the employee's manager?`,
+            choices: employeesNames
+        }
+    ]).then(answers => {
+        let roleId;
+        let managerId;
+
+        for (let i = 0; i < rolesData.length; i++) {
+            if (answers.role === rolesData[i].role) {
+                roleId = rolesData[i].id;
+            }
+        }
+
+        for (let i = 0; i < employeesData.length; i++) {
+            if (answers.manager === employeesData[i].last_name) {
+                managerId = employeesData[i].id;
+            } else if (answers.manager === 'No Manager') {
+                managerId = null;
+            }
+        }
+        insertEmployee(answers.firstName, answers.lastName, roleId, managerId);
+    });
+}
+
+function insertEmployee(firstName, lastName, roleId, managerId) {
+    connection.query('INSERT INTO employees SET ?', new Employee(firstName, lastName, roleId, managerId), (err, res) => {
+        if (err) throw err;
+        console.log(`Successfully added ${firstName} ${lastName} to Employees`);
+        init();
+    });
+}
+
+function getRolesAsync() {
+    return new Promise((resolve, reject) => {
+        connection.query(`SELECT id, title AS 'role' FROM roles ORDER BY role`, (err, data) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve(data);
+        });
+    });
+}
+
+function getEmployeesAsync() {
+    return new Promise((resolve, reject) => {
+        connection.query(`SELECT id, last_name FROM employees ORDER BY last_name`, (err, data) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve(data);
+        });
+    });
+}
 
 
 
@@ -162,7 +272,7 @@ function getDepartmentsAsync() {
 // ==============
 
 
-// View departments
+// View departments MOVED TO VIEW PAGE
 function viewDepartments() {
     connection.query(`SELECT name AS 'Departments' FROM departments`, (err, res) => {
         if (err) throw err;
