@@ -28,13 +28,16 @@ function init() {
             type: 'list',
             name: 'init',
             message: 'What would you like to do?',
-            choices: ['Add Department', 'Add Role', 'Add Employee', 'View Departments', 'View Roles', 'View Employees', 'Exit Employee Tracker']
+            choices: ['Update Employee','Add Department', 'Add Role', 'Add Employee', 'View Departments', 'View Roles', 'View Employees', 'Exit Employee Tracker']
         }
     ]).then((answers) => {
         switch(answers.init) {
             case 'Exit Employee Tracker':
                 connection.end();
                 console.log('Goodbye');
+                break;
+            case 'Update Employee':
+                updateEmployee();
                 break;
             case 'Add Department':
                 addDepartment();
@@ -140,16 +143,6 @@ function insertRole(title, salary, department_id) {
 
 }
 
-function getDepartmentsAsync() {
-    return new Promise((resolve, reject) => {
-        connection.query(`SELECT * FROM departments`, (err, data) => {
-            if (err) {
-                return reject(err);
-            }
-            return resolve(data);
-        })
-    })
-}
 
 
 
@@ -242,27 +235,6 @@ function insertEmployee(firstName, lastName, roleId, managerId) {
     });
 }
 
-function getRolesAsync() {
-    return new Promise((resolve, reject) => {
-        connection.query(`SELECT id, title AS 'role' FROM roles ORDER BY role`, (err, data) => {
-            if (err) {
-                return reject(err);
-            }
-            return resolve(data);
-        });
-    });
-}
-
-function getEmployeesAsync() {
-    return new Promise((resolve, reject) => {
-        connection.query(`SELECT id, last_name FROM employees ORDER BY last_name`, (err, data) => {
-            if (err) {
-                return reject(err);
-            }
-            return resolve(data);
-        });
-    });
-}
 
 
 
@@ -366,8 +338,194 @@ function sortByDepartment() {
     });
 }
 
+// Update Employee Information
+
+function updateEmployee() {
+    const rolesData = [];
+    const rolesNames = [];
+
+    const employeesData = [];
+    const employeesNames = [];
+
+    getRolesAsync()
+    .then(data => {
+        for (let i = 0; i < data.length; i++) {
+            rolesData.push(data[i]);
+            rolesNames.push(data[i].role)
+        }
+
+        getEmployeesAsync()
+        .then(data => {
+            for (let i = 0; i < data.length; i++) {
+                employeesData.push(data[i]);
+                employeesNames.push(data[i].last_name)
+            }
+            updateEmployeeQuestions(rolesData, rolesNames, employeesData, employeesNames);
+        }).catch(err => {
+            console.log(err);
+        })
+    }).catch(err => {
+        console.log(err);
+    });
+}
+
+
+function updateEmployeeQuestions(rolesData, rolesNames, employeesData, employeesNames){
+    inquirer.prompt([
+        {
+            type: 'list', 
+            name: 'employee',
+            message: 'Which employee would you like to update?',
+            choices: employeesNames
+        },
+        {
+            type: 'list',
+            name: 'update',
+            message: 'What information would you like to update?',
+            choices: [`Employee's role`, `Employee's manager`, 'Cancel']
+        }
+    ]).then(answers => {
+        let employeeId;
+        for (let i = 0; i < employeesData.length; i++) {
+            if (answers.employee === employeesData[i].last_name) {
+                employeeId = employeesData[i].id;
+            }
+        }
+        if (answers.update === `Employee's role`) {
+            getNewRoleId(employeeId, rolesData, rolesNames)
+        } else if (answers.update === `Employee's manager`) {
+            employeesNames.push('No Manager');
+            getManagerId(employeeId, employeesData, employeesNames)
+        } else {
+            init();
+        }
+    })
+}
+
+
+function getNewRoleId(employeeId, rolesData, rolesNames){
+    inquirer.prompt([
+        {
+            type: 'list',
+            name: 'role',
+            message: `What is the employee's new role?`,
+            choices: rolesNames
+        }
+    ]).then(answers => {
+        let roleId;
+        for (let i = 0; i < rolesData.length; i++) {
+            if (answers.role === rolesData[i].role) {
+                roleId = rolesData[i].id;
+            }
+        }
+        updateEmployeeRole(employeeId, roleId)
+    })
+}
+
+function updateEmployeeRole(employeeId, roleId) {
+    connection.query(`UPDATE employees SET ? WHERE ?`, [
+        {
+            role_id: roleId
+        },
+        {
+            id: employeeId
+        }
+    ],
+    (err, res) => {
+        if (err) throw err;
+        console.log(`Successfully changed employee's role`);
+        init();
+    })
+}
+
+
+function getManagerId(employeeId, employeesData, employeesNames) {
+    inquirer.prompt([
+        {
+            type: 'list', 
+            name: 'manager',
+            message: `Who is the employee's new manager?`,
+            choices: employeesNames
+        }
+    ]).then(answers => {
+        let managerId;
+        for (let i = 0; i < employeesData.length; i++) {
+            if (answers.manager === employeesData[i].last_name) {
+                managerId = employeesData[i].id;
+            }
+        }
+        if (answers.manager === 'No Manager') {
+            managerId = null;
+        }
+        updateEmployeeManager(employeeId, managerId)
+    })
+}
+
+function updateEmployeeManager(employeeId, managerId) {
+    connection.query(`UPDATE employees SET ? WHERE ?`, [
+        {
+            manager_id: managerId
+        },
+        {
+            id: employeeId
+        }
+    ],
+    (err, res) => {
+        if (err) throw err;
+        console.log(`Successfully changed employee's manager`);
+        init();
+    })
+}
 
 
 
 
-// Update Employee Roles
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ===============
+// Async Functions
+// ===============
+
+function getRolesAsync() {
+    return new Promise((resolve, reject) => {
+        connection.query(`SELECT id, title AS 'role' FROM roles ORDER BY role`, (err, data) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve(data);
+        });
+    });
+}
+
+function getEmployeesAsync() {
+    return new Promise((resolve, reject) => {
+        connection.query(`SELECT id, last_name FROM employees ORDER BY last_name`, (err, data) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve(data);
+        });
+    });
+}
+
+function getDepartmentsAsync() {
+    return new Promise((resolve, reject) => {
+        connection.query(`SELECT * FROM departments`, (err, data) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve(data);
+        })
+    })
+}
