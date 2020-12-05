@@ -658,6 +658,18 @@ function deleteRoleFromDb(roleId, name) {
 
 
 
+
+// // Query that gets all the salaries from a department
+// // View the total utilized budget of a department
+// (`SELECT r.salary
+// FROM employees e
+// JOIN roles r
+// ON e.role_id = r.id
+// JOIN departments d
+// ON r.department_id = d.id 
+// WHERE d.id = 1`)
+
+
 // ===============
 // Async Functions
 // ===============
