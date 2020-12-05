@@ -28,7 +28,8 @@ function init() {
             type: 'list',
             name: 'init',
             message: 'What would you like to do?',
-            choices: ['Update Employee','Add Department', 'Add Role', 'Add Employee', 'View Departments', 'View Roles', 'View Employees', 'Exit Employee Tracker']
+            choices: ['Update Employee','Add Department', 'Add Role', 'Add Employee', 'View Departments', 'View Roles', 'View Employees', 'Delete Employee', 'Delete Department', 'Delete Role', 'Exit Employee Tracker'],
+            pageSize: 12
         }
     ]).then((answers) => {
         switch(answers.init) {
@@ -57,6 +58,15 @@ function init() {
             case 'View Roles':
                 viewRoles();
                 break;
+            case 'Delete Employee':
+                deleteEmployee();
+                break;
+            case 'Delete Department':
+                deleteDepartment();
+                break;
+            case 'Delete Role':
+                deleteRole();
+            break;
         }
     })
 }
@@ -482,14 +492,169 @@ function updateEmployeeManager(employeeId, managerId) {
 
 
 
+// Delete Employee
+
+function deleteEmployee() {
+    getEmployeesAsync()
+    .then(data => {
+        const employeesData = [];
+        const employeesNames = [];
+        for (let i = 0; i < data.length; i++) {
+            employeesData.push(data[i]);
+            employeesNames.push(data[i].last_name)
+        }
+        deleteEmployeeQuestions(employeesData, employeesNames)
+    })
+    .catch(err => {
+        console.log(err);
+    })
+}
+
+function deleteEmployeeQuestions(employeesData, employeesNames) {
+    inquirer.prompt([
+        {
+            type: 'list',
+            name: 'name',
+            message: 'Which employee would you like to delete?',
+            choices: employeesNames,
+            pageSize: 12
+        },
+        {
+            type: 'confirm',
+            name: 'confirm',
+            message: 'Are you sure?'
+        }
+    ]).then(answers => {
+        if (answers.confirm){
+            let employeeId;
+            for (let i = 0; i < employeesData.length; i++) {
+                if (answers.name === employeesData[i].last_name) {
+                    employeeId = employeesData[i].id;
+                }
+            }
+            deleteEmployeeFromDb(employeeId, answers.name);
+        } else {
+            init();
+        }
+    })
+}
+
+function deleteEmployeeFromDb(employeeId, name) {
+    connection.query(`DELETE FROM employees WHERE ?`, {id: employeeId}, (err, res) => {
+        if (err) throw err;
+        console.log(`Successfully deleted ${name} from the database.`);
+        init();
+    })
+}
 
 
+// Delete Department
+function deleteDepartment() {
+    const departmentsData = [];
+    const departmentsNames = [];
+    getDepartmentsAsync()
+    .then(data => {
+        for (let i = 0; i < data.length; i++) {
+            departmentsData.push(data[i]);
+            departmentsNames.push(data[i].name);
+        }
+        deleteDepartmentQuestions(departmentsData, departmentsNames);
+    }).catch(err => {
+        console.log(err);
+    })
+}
+
+function deleteDepartmentQuestions(departmentsData, departmentsNames) {
+    inquirer.prompt([
+        {
+            type: 'list',
+            name: 'name',
+            message: `Which department would you like to delete?`,
+            choices: departmentsNames,
+            pageSize: 12
+        },
+        {
+            type: 'confirm',
+            name: 'confirm',
+            message: 'Are you sure?'
+        }
+    ]).then(answers => {
+        if (answers.confirm) {
+            let departmentId;
+            for (let i = 0; i < departmentsData.length; i++) {
+                if (answers.name === departmentsData[i].name) {
+                    departmentId = departmentsData[i].id;
+                }
+            }
+            deleteDepartmentFromDb(departmentId, answers.name);
+        } else {
+            init();
+        }
+    });
+}
+
+function deleteDepartmentFromDb(departmentId, name) {
+    connection.query(`DELETE FROM departments WHERE ?`, {id: departmentId}, (err, res) => {
+        if (err) throw err;
+        console.log(`Successfully deleted ${name} from the database.`);
+        init();
+    })
+}
+
+// Delete Role
+
+function deleteRole() {
+    getRolesAsync()
+    .then(data => {
+        const rolesData = [];
+        const rolesNames = [];
+        for (let i = 0; i < data.length; i++) {
+            rolesData.push(data[i]);
+            rolesNames.push(data[i].role);
+        }
+        deleteRoleQuestions(rolesData, rolesNames);
+    }).catch(err => {
+        console.log(err);
+    })
+}
 
 
+function deleteRoleQuestions(rolesData, rolesNames) {
+    inquirer.prompt([
+        {
+            type: 'list',
+            name: 'name',
+            message: 'Which role would you like to delete?',
+            choices: rolesNames,
+            pageSize: 12
+        },
+        {
+            type: 'confirm',
+            name: 'confirm',
+            message: 'Are you sure?'
+        }
+    ]).then(answers => {
+        if (answers.confirm) {
+            let roleId;
+            for (let i = 0; i < rolesData.length; i++) {
+                if (answers.name === rolesData[i].role) {
+                    roleId = rolesData[i].id;
+                }
+            }
+            deleteRoleFromDb(roleId, answers.name);
+        } else {
+            init();
+        }
+    })
+}
 
-
-
-
+function deleteRoleFromDb(roleId, name) {
+    connection.query(`DELETE FROM roles WHERE ?`, {id: roleId}, (err, res) => {
+        if (err) throw err;
+        console.log(`Successfully deleted ${name} from database.`);
+        init();
+    })
+}
 
 
 
