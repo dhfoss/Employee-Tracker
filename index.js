@@ -1,6 +1,7 @@
 const cTable = require('console.table');
 const inquirer = require('inquirer');
 const mysql = require('mysql');
+const commaNumber = require('comma-number')
 const Department = require(__dirname + '/classes/Department.js');
 const Role = require(__dirname + '/classes/Role.js');
 const Employee = require(__dirname + '/classes/Employee.js');
@@ -28,7 +29,7 @@ function init() {
             type: 'list',
             name: 'init',
             message: 'What would you like to do?',
-            choices: ['Update Employee','Add Department', 'Add Role', 'Add Employee', 'View Departments', 'View Roles', 'View Employees', 'Delete Employee', 'Delete Department', 'Delete Role', 'Exit Employee Tracker'],
+            choices: ['View Departments', 'View Roles', 'View Employees', 'View Department Budget', 'Update Employee','Add Department', 'Add Role', 'Add Employee', 'Delete Department', 'Delete Role', 'Delete Employee', 'Exit Employee Tracker'],
             pageSize: 12
         }
     ]).then((answers) => {
@@ -57,6 +58,9 @@ function init() {
                 break;
             case 'View Roles':
                 viewRoles();
+                break;
+            case 'View Department Budget':
+                viewDepartmentBudget();
                 break;
             case 'Delete Employee':
                 deleteEmployee();
@@ -386,7 +390,8 @@ function updateEmployeeQuestions(rolesData, rolesNames, employeesData, employees
             type: 'list', 
             name: 'employee',
             message: 'Which employee would you like to update?',
-            choices: employeesNames
+            choices: employeesNames,
+            pageSize: 12
         },
         {
             type: 'list',
@@ -419,7 +424,8 @@ function getNewRoleId(employeeId, rolesData, rolesNames){
             type: 'list',
             name: 'role',
             message: `What is the employee's new role?`,
-            choices: rolesNames
+            choices: rolesNames,
+            pageSize: 12
         }
     ]).then(answers => {
         let roleId;
@@ -455,7 +461,8 @@ function getManagerId(employeeId, employeesData, employeesNames) {
             type: 'list', 
             name: 'manager',
             message: `Who is the employee's new manager?`,
-            choices: employeesNames
+            choices: employeesNames,
+            pageSize: 12
         }
     ]).then(answers => {
         let managerId;
@@ -659,15 +666,76 @@ function deleteRoleFromDb(roleId, name) {
 
 
 
-// // Query that gets all the salaries from a department
-// // View the total utilized budget of a department
-// (`SELECT r.salary
-// FROM employees e
-// JOIN roles r
-// ON e.role_id = r.id
-// JOIN departments d
-// ON r.department_id = d.id 
-// WHERE d.id = 1`)
+// Query that gets all the salaries from a department
+// View the total utilized budget of a department
+(`SELECT r.salary
+FROM employees e
+JOIN roles r
+ON e.role_id = r.id
+JOIN departments d
+ON r.department_id = d.id 
+WHERE d.id = 1`)
+
+function viewDepartmentBudget() {
+    const departmentsData = [];
+    const departmentsNames = [];
+    getDepartmentsAsync()
+    .then(data => {
+        for (let i = 0; i < data.length; i++) {
+            departmentsData.push(data[i]);
+            departmentsNames.push(data[i].name);
+        }
+        viewBudgetQuestions(departmentsData, departmentsNames);
+    }).catch(err => {
+        console.log(err);
+    });
+}
+
+function viewBudgetQuestions(departmentsData, departmentsNames) {
+    inquirer.prompt([
+        {
+            type: 'list',
+            name: 'name',
+            message: 'Which department budget would you like to see?',
+            choices: departmentsNames
+        }
+    ]).then(answers => {
+        let departmentId;
+        for (let i = 0; i < departmentsData.length; i++) {
+            if (answers.name === departmentsData[i].name) {
+                departmentId = departmentsData[i].id;
+            }
+        }
+        getDepartmentBudget(departmentId, answers.name);
+    });
+}
+
+function getDepartmentBudget(departmentId, name) {
+    connection.query(`SELECT r.salary
+                      FROM employees e
+                      JOIN roles r
+                      ON e.role_id = r.id
+                      JOIN departments d
+                      ON r.department_id = d.id 
+                      WHERE ?`, {'d.id': departmentId}, 
+                      (err, data) => {
+                            if (err) throw err;
+                            calculateDepartmentBudget(data, name);
+                      });
+}
+
+
+function calculateDepartmentBudget(data, name) {
+    let departmentBudget = 0;
+    for (let i = 0; i < data.length; i++) {
+        departmentBudget += data[i].salary;
+    }
+    departmentBudget = departmentBudget.toFixed(2);
+    departmentBudget = commaNumber(departmentBudget);
+    console.log(`\nThe budget for ${name} is $${departmentBudget}\n`);
+    init();
+}
+
 
 
 // ===============
