@@ -1,7 +1,7 @@
 const cTable = require('console.table');
 const inquirer = require('inquirer');
 const mysql = require('mysql');
-const commaNumber = require('comma-number')
+const commaNumber = require('comma-number');
 const Department = require(__dirname + '/classes/Department.js');
 const Role = require(__dirname + '/classes/Role.js');
 const Employee = require(__dirname + '/classes/Employee.js');
@@ -91,7 +91,18 @@ function addDepartment() {
         {
             type: 'input',
             name: 'name',
-            message: 'What is the name of the new department?'
+            message: 'What is the name of the new department?',
+            default: () => {},
+            validate: name => {
+                let valid = /^[a-zA-Z0-9 ]{1,30}$/.test(name);
+                if (valid) {
+                    return true;
+                } else {
+                    console.log(`. Your name must be between 1 and 30 characters.`)
+                    return false;
+                }
+            }
+
         }
     ]).then((answers) => {
         insertDepartment(answers.name);
@@ -124,12 +135,32 @@ function addRole() {
         {
             type: 'input',
             name: 'title',
-            message: 'What is the title of the new role?'
+            message: 'What is the title of the new role?',
+            default: () => {},
+            validate: title => {
+                let valid = /^[a-zA-Z0-9 ]{1,30}$/.test(title);
+                if (valid) {
+                    return true;
+                } else {
+                    console.log(`. Your title must be between 1 and 30 characters.`)
+                    return false;
+                }
+            }
         },
         {
             type: 'input',
             name: 'salary',
-            message: 'What is the salary of the new role?'
+            message: 'What is the salary of the new role?',
+            default: () => {},
+                validate: salary => {
+                    let valid = /^\d+(\.\d{0,2})?$/.test(salary);
+                    if (valid) {
+                        return true;
+                    } else {
+                        console.log(`. Please enter in a valid number`)
+                        return false;
+                    }
+                }
         },
         {
             type: 'list',
@@ -202,11 +233,32 @@ function addEmployee() {
             type: 'input',
             name: 'firstName',
             message: `What is the employee's first name?`,
+            default: () => {},
+            validate: firstName => {
+                let valid = /^[a-zA-Z0-9 ]{1,30}$/.test(firstName);
+                if (valid) {
+                    return true;
+                } else {
+                    console.log(`. Your name must be between 1 and 30 characters.`)
+                    return false;
+                }
+            }
         },
         {
             type: 'input',
             name: 'lastName',
-            message: `What is the employee's last name?`
+            message: `What is the employee's last name?`,
+            default: () => {},
+            validate: lastName => {
+                let valid = /^[a-zA-Z0-9 ]{1,30}$/.test(lastName);
+                if (valid) {
+                    return true;
+                } else {
+                    console.log(`. Your name must be between 1 and 30 characters.`)
+                    return false;
+                }
+            }
+
         },
         {
             type: 'list',
@@ -732,7 +784,7 @@ function calculateDepartmentBudget(data, name) {
     }
     departmentBudget = departmentBudget.toFixed(2);
     departmentBudget = commaNumber(departmentBudget);
-    console.log(`\nThe budget for ${name} is $${departmentBudget}\n`);
+    console.log(`\nThe budget for ${name} is $${departmentBudget}`);
     init();
 }
 
