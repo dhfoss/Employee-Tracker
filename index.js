@@ -12,7 +12,7 @@ const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: 'rootroot',
-    database: 'company'
+    database: 'company_db'
 });
 
 
@@ -323,7 +323,7 @@ function viewDepartments() {
 // View Roles
 function viewRoles() {
     connection.query(`SELECT r.title AS 'Role', d.name AS 'Department', r.salary AS 'Salary'
-                      FROM company.roles r
+                      FROM roles r
                       JOIN departments d
                       ON r.department_id = d.id
                       ORDER BY r.department_id`, 
