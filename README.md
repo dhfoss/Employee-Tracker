@@ -2,10 +2,13 @@
 
 ## Table of Contents
 [Description](https://github.com/dhfoss/Employee-Tracker/#description)  
-[Installation](https://github.com/dhfoss/Employee-Tracker/#installation)   [Usage](https://github.com/dhfoss/Employee-Tracker/#usage)   [Demonstration](https://github.com/dhfoss/Employee-Tracker/#demonstration)   [Questions](https://github.com/dhfoss/Employee-Tracker/#questions)  
+[Installation](https://github.com/dhfoss/Employee-Tracker/#installation)  
+[Usage](https://github.com/dhfoss/Employee-Tracker/#usage)  
+[Demonstration](https://github.com/dhfoss/Employee-Tracker/#demonstration)  
+[Questions](https://github.com/dhfoss/Employee-Tracker/#questions)
 
 ### Description
-This is a CLI app that allows a user to perform create, read, update, and delete (CRUD) functions on a SQL database represending the departments, roles and employees of a company.  It is set up in a user friendly way, and requires no knowledge of SQL commands to opperate.
+This is a CLI app that allows a user to perform create, read, update, and delete (CRUD) functions on a SQL database representing the departments, roles and employees of a company.  It is set up in a user friendly way, and requires no knowledge of SQL commands to operate.
 
 ### Installation
 This app uses inquirer.js, mysql, console.table, and comma-number.  Run `npm install` in the root directory to download these dependencies. Since it interacts with a SQL database, a SQL interface is also required.
@@ -24,7 +27,7 @@ The first three are GET requests for viewing the data for the three databases.  
 The `View Department Budget` allows the user to select one of the departments, and totals up the salaries of all the employees in that department.  
 ![View Department Budget](/screen-shots/4-viewbudget.png?raw=true "Sample Note")
 
-The next three options are INSERT INTO commands, allowing the user to add departments, roles, and employees.  Inquirer will validate responses to make sure that they can be inserted into their respective table coloumns.  For example, the 'name' coloumn of the departments table only accepts VARCHAR(30), while the 'salary' colomn of the roles table only accepts DEC(11, 2) values.  
+The next three options are INSERT INTO commands, allowing the user to add departments, roles, and employees.  Inquirer will validate responses to make sure that they can be inserted into their respective table columns.  For example, the 'name' column of the departments table only accepts VARCHAR(30), while the 'salary' column of the roles table only accepts DEC(11, 2) values.  
 ![Validation](/screen-shots/5-validation.png?raw=true "Sample Note")
 
 Before inquirer runs the questions, a GET function is run behind the scenes, getting the names and ids of the relevant information needed so that the user does not have to know ids, or exact spellings of roles/departments when adding information.  An array of names is passed into the inquirer prompt itself, so they appear as choices in a 'list' type question.  
